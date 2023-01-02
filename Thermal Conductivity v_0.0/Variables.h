@@ -1,5 +1,7 @@
 #pragma once
 
+double Pi = 3.14159;
+
 /* Количество элементов */
 int max_str;
 

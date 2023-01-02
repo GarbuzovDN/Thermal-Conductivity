@@ -9,20 +9,6 @@ using namespace std;
 
 #include "Variables.h"
 
-void Test()
-{
-    for (int i = 0; i < vectorElement.size(); i++)
-    {
-
-        if (vectorElement[i].T < 0)
-        {
-            i = i;
-        }
-
-    }
-
-}
-
 void Arrays_Creation()
 {
 
@@ -160,42 +146,24 @@ void Mesh_Init()
         double a = el.Length_face_el_1;
         double b = el.Length_face_el_2;
         double c = el.Length_face_el_3;
-        el.Area_el = 0.25 * sqrt((a + b + c) + (b + c - a) + (a + c - b) + (a + b - c));
-
-        double TEST = 0.5 * abs((el.Coord_vert_2.x - el.Coord_vert_1.x) * (el.Coord_vert_3.y - el.Coord_vert_1.y) -
-            (el.Coord_vert_3.x - el.Coord_vert_1.x) * (el.Coord_vert_2.y - el.Coord_vert_1.y));
-
-        double xc_1, ус_1, xc_2, ус_2, xc_3, ус_3;
+        double p = 0.5 * (a + b + c);
+        el.Area_el = sqrt(p * (p - a) * (p - b) * (p - c));
 
         /* Блок нахождения центра элемента */
         {
 
-            xc_1 = 0.5 * (el.Coord_vert_2.x + el.Coord_vert_1.x);
-            ус_1 = 0.5 * (el.Coord_vert_2.y + el.Coord_vert_1.y);
+            double AB = el.Length_face_el_1, BC = el.Length_face_el_2, AC = el.Length_face_el_3;
+            double x_a = el.Coord_vert_1.x, x_b = el.Coord_vert_2.x, x_c = el.Coord_vert_3.x;
+            double y_a = el.Coord_vert_1.y, y_b = el.Coord_vert_2.y, y_c = el.Coord_vert_3.y;
 
-            xc_2 = 0.5 * (el.Coord_vert_3.x + el.Coord_vert_2.x);
-            ус_2 = 0.5 * (el.Coord_vert_3.y + el.Coord_vert_2.y);
-
-            xc_3 = 0.5 * (el.Coord_vert_1.x + el.Coord_vert_3.x);
-            ус_3 = 0.5 * (el.Coord_vert_1.y + el.Coord_vert_3.y);
-
-            /* Уравнение серединного перпендикуляра 1 */
-            double a1 = el.Coord_vert_1.x - el.Coord_vert_2.x;
-            double b1 = -(el.Coord_vert_2.y - el.Coord_vert_1.y);
-            double c1 = -((el.Coord_vert_1.x - el.Coord_vert_2.x) * xc_1 - (el.Coord_vert_2.y - el.Coord_vert_1.y) * ус_1);
-
-            double a2 = el.Coord_vert_2.x - el.Coord_vert_3.x;
-            double b2 = -(el.Coord_vert_3.y - el.Coord_vert_2.y);
-            double c2 = -((el.Coord_vert_2.x - el.Coord_vert_3.x) * xc_2 - (el.Coord_vert_3.y - el.Coord_vert_2.y) * ус_2);
-
-            el.Coord_center_el.x = (b1 * c2 - b2 * c1) / (b2 * a1 - b1 * a2);
-            el.Coord_center_el.y = (a2 * c1 - a1 * c2) / (a1 * b2 - a2 * b1);
+            el.Coord_center_el.x = (BC * x_a + AC * x_b + AB * x_c) / (AB + BC + AC);
+            el.Coord_center_el.y = (BC * y_a + AC * y_b + AB * y_c) / (AB + BC + AC);
 
         }
 
-        el.h_1 = sqrt(pow((el.Coord_center_el.x - xc_1), 2) + pow((el.Coord_center_el.y - ус_1), 2));
-        el.h_2 = sqrt(pow((el.Coord_center_el.x - xc_2), 2) + pow((el.Coord_center_el.y - ус_2), 2));
-        el.h_3 = sqrt(pow((el.Coord_center_el.x - xc_3), 2) + pow((el.Coord_center_el.y - ус_3), 2));
+        el.h_1 = el.Area_el / p;
+        el.h_2 = el.Area_el / p;
+        el.h_3 = el.Area_el / p;
 
         vectorElement.push_back(el);
 
@@ -330,9 +298,7 @@ void Mesh_Init()
 
             }
 
-            //if(vectorElement[i].Geom_el == 2 && vectorElement[i].Num_bound == 2) cout << vectorElement[i].Num_el << " \t " << vectorElement[i].N1_e << " \t " << vectorElement[i].N2_e << " \t " << vectorElement[i].N3_e << " \t " << vectorElement[i].Num_bound << endl;
-
-            i = i;
+            //cout << vectorElement[i].Num_el << "; " << vectorElement[i].N1_e << "; " << vectorElement[i].N2_e << "; " << vectorElement[i].N3_e << endl;
 
         }
 
@@ -538,6 +504,18 @@ void Calculation_Temperature()
 
             vectorElement[i].T = dt / vectorElement[i].Area_el * (dT1 + dT2 + dT3) + vectorElement[i].t;
 
+            if (vectorElement[i].T < 0)
+            {
+                i = i;
+            }
+
+        }
+
+        if (vectorElement[i].Geom_el == 2)
+        {
+
+            //cout << "T=" << vectorElement[i].T << " (EL=" << vectorElement[i].Num_el << "); " << endl;
+
         }
 
     }
@@ -592,14 +570,150 @@ void Write()
     }
 
     ofstream file_E_T("Documents/Figure/E_T.DAT", ios_base::app);
-    file_E_T << fixed << setprecision(6) << _time << "\t" << E_T << endl;
+    file_E_T << fixed << setprecision(6) << _time << fixed << setprecision(10) << "\t" << E_T << endl;
+
+}
+
+double Temp_prof(double xx, double yy)
+{
+
+    double dl;
+    double temp_1 = 99, temp_2 = 100, temp_3 = 101;
+
+    if (Iter_Glob == 0)
+    {
+
+        for (int i = 0; i < vectorElement.size(); i++)
+        {
+            if (vectorElement[i].Geom_el == 2)
+            {
+
+                dl = sqrt(pow((vectorElement[i].Coord_center_el.x - xx), 2) + pow((vectorElement[i].Coord_center_el.y - yy), 2));
+
+                if (dl < temp_1)
+                {
+
+                    temp_1 = dl;
+                    num_el_1 = vectorElement[i].Num_el;
+
+                    i = i;
+
+                }
+            }
+
+        }
+
+    }
+    else
+    {
+
+        for (int i = 0; i < vectorElement.size(); i++)
+        {
+            if (vectorElement[i].Geom_el == 2)
+            {
+
+                dl = sqrt(pow((vectorElement[i].Coord_center_el.x - xx), 2) + pow((vectorElement[i].Coord_center_el.y - yy), 2));
+
+                if (dl < temp_1)
+                {
+
+                    temp_1 = dl;
+                    num_el_1 = vectorElement[i].Num_el;
+
+                    i = i;
+
+                }
+            }
+
+        }
+
+        for (int i = 0; i < vectorElement.size(); i++)
+        {
+
+            if (vectorElement[i].Geom_el == 2)
+            {
+
+                dl = sqrt(pow((vectorElement[i].Coord_center_el.x - xx), 2) + pow((vectorElement[i].Coord_center_el.y - yy), 2));
+
+                if (dl < temp_2 && vectorElement[i].Num_el != num_el_1)
+                {
+
+                    temp_2 = dl;
+
+                    num_el_2 = vectorElement[i].Num_el;
+
+                    i = i;
+
+                }
+
+            }
+
+        }
+
+        for (int i = 0; i < vectorElement.size(); i++)
+        {
+
+            if (vectorElement[i].Geom_el == 2)
+            {
+
+                dl = sqrt(pow((vectorElement[i].Coord_center_el.x - xx), 2) + pow((vectorElement[i].Coord_center_el.y - yy), 2));
+
+                if (dl < temp_3 && vectorElement[i].Num_el != num_el_1 && vectorElement[i].Num_el != num_el_2)
+                {
+
+                    temp_3 = dl;
+                    num_el_3 = vectorElement[i].Num_el;
+
+                    i = i;
+
+                }
+
+            }
+
+        }
+
+        double a1, a2, b1, b2, c1, c2;
+        double Ax = vectorElement[num_el_1 - 1].Coord_center_el.x;
+        double Ay = vectorElement[num_el_1 - 1].Coord_center_el.y;
+        double Ex = xx;
+        double Ey = yy;
+        double Bx = vectorElement[num_el_2 - 1].Coord_center_el.x;
+        double By = vectorElement[num_el_2 - 1].Coord_center_el.y;
+        double Cx = vectorElement[num_el_3 - 1].Coord_center_el.x;
+        double Cy = vectorElement[num_el_3 - 1].Coord_center_el.y;
+
+        a1 = Ay - Ey;
+        b1 = Ex - Ax;
+        c1 = Ax * Ey - Ex * Ay;
+        a2 = By - Cy;
+        b2 = Cx - Bx;
+        c2 = Bx * Cy - Cx * By;
+
+        double det = a1 * b2 - a2 * b1;
+        double Dx = (b1 * c2 - b2 * c1) / det;
+        double Dy = (a2 * c1 - a1 * c2) / det;
+
+        double BD = sqrt(pow((Bx - Dx), 2) + pow((By - Dy), 2));
+        double BC = sqrt(pow((Bx - Cx), 2) + pow((By - Cy), 2));
+
+        double T_D = vectorElement[num_el_2 - 1].T + BD / BC * (vectorElement[num_el_3 - 1].T - vectorElement[num_el_2 - 1].T);
+
+        double AE = sqrt(pow((Ax - xx), 2) + pow((Ay - yy), 2));
+        double AD = sqrt(pow((Ax - Dx), 2) + pow((Ay - Dy), 2));
+        double T_E;
+
+        return T_E = vectorElement[num_el_1 - 1].T + AE / AD * (T_D - vectorElement[num_el_1 - 1].T);
+
+        double pp = 0;
+
+    }
 
 }
 
 void Write_End()
 {
 
-    ofstream Field_T("Documents/Figure/T_Field.DAT");
+    ofstream Field_T("Documents/Figure/T_Field_(El = " + to_string(max_str) + ").DAT");
     ofstream Profile_T("Documents/Figure/T_Profile_(El = " + to_string(max_str) + ").DAT");
 
     Field_T << fixed << setprecision(4) << "Time: " << _time << "\t" << "Mesh (Number of cells): " << max_str << endl;
@@ -617,154 +731,48 @@ void Write_End()
     Profile_T << fixed << setprecision(4) << "Time: " << _time << "\t" << "Mesh (Number of cells): " << max_str << endl;
 
     /* Запись значения температуры в сечении */
-    for (int i = 0; i < max_str; i++)
+    int ii = 0;
+    double h = 0.1;
+    do
     {
 
-        if (vectorElement[i].Geom_el == 2 &&
-            (vectorElement[i].Num_el == 1420 || vectorElement[i].Num_el == 181 ||
-                vectorElement[i].Num_el == 219 || vectorElement[i].Num_el == 2536 ||
-                vectorElement[i].Num_el == 1570 || vectorElement[i].Num_el == 1997 ||
-                vectorElement[i].Num_el == 2160 || vectorElement[i].Num_el == 800 ||
-                vectorElement[i].Num_el == 1331 || vectorElement[i].Num_el == 1770 ||
-                vectorElement[i].Num_el == 884 || vectorElement[i].Num_el == 1501 ||
-                vectorElement[i].Num_el == 1465 || vectorElement[i].Num_el == 1914 ||
-                vectorElement[i].Num_el == 2707 || vectorElement[i].Num_el == 2385 ||
-                vectorElement[i].Num_el == 1023))
+        double angle = Pi / 4.0;
+
+        double x = (0.2 + ii * h) * cos(angle);
+        double y = (0.2 + ii * h) * sin(angle);
+
+        if (ii == 0)
         {
 
-            vectorElement[i].l = sqrt(pow((vectorElement[i].Coord_center_el.x), 2) + pow((vectorElement[i].Coord_center_el.y), 2));
-
-            Profile_T << fixed << setprecision(10) << vectorElement[i].l << " \t " << vectorElement[i].T << " \t " << vectorElement[i].Num_el << endl;
+            Profile_T << fixed << setprecision(9) << 0.2 + ii * h << "\t" << "1.000000000" << endl;
 
         }
+        else Profile_T << fixed << setprecision(9) << 0.2 + ii * h << "\t" << Temp_prof(x, y) << endl;
 
-    }
+        ii++;
 
-}
+    } while ((0.2 + ii * h) < 1.0);
 
-void Find_el(double xx, double yy)
-{
+    Profile_T << fixed << setprecision(9) << 0.2 + ii * h << "\t" << "0.000000000" << endl;
 
-    double dl;
-    double temp_1 = 99, temp_2 = 100, temp_3 = 101;
+    cout << "===========================================================================" << endl;
 
-    for (int i = 0; i < vectorElement.size(); i++)
-    {
-        if (vectorElement[i].Geom_el == 2)
-        {
+    cout << "The calculation is OVER: " << endl << File_Mesh_Name << endl;
 
-            dl = sqrt(pow((vectorElement[i].Coord_center_el.x - xx), 2) + pow((vectorElement[i].Coord_center_el.y - yy), 2));
-
-            if (dl < temp_1)
-            {
-
-                temp_1 = dl;
-                num_el_1 = vectorElement[i].Num_el;
-
-                i = i;
-
-            }
-        }
-
-    }
-
-    for (int i = 0; i < vectorElement.size(); i++)
-    {
-
-        if (vectorElement[i].Geom_el == 2)
-        {
-
-            dl = sqrt(pow((vectorElement[i].Coord_center_el.x - xx), 2) + pow((vectorElement[i].Coord_center_el.y - yy), 2));
-
-            if (dl < temp_2 && vectorElement[i].Num_el != num_el_1)
-            {
-
-                temp_2 = dl;
-
-                num_el_2 = vectorElement[i].Num_el;
-
-                i = i;
-
-            }
-
-        }
-
-    }
-
-    for (int i = 0; i < vectorElement.size(); i++)
-    {
-
-        if (vectorElement[i].Geom_el == 2)
-        {
-
-            dl = sqrt(pow((vectorElement[i].Coord_center_el.x - xx), 2) + pow((vectorElement[i].Coord_center_el.y - yy), 2));
-
-            if (dl < temp_3 && vectorElement[i].Num_el != num_el_1 && vectorElement[i].Num_el != num_el_2)
-            {
-
-                temp_3 = dl;
-                num_el_3 = vectorElement[i].Num_el;
-
-                i = i;
-
-            }
-
-        }
-
-    }
-
-    double a1, a2, b1, b2, c1, c2;
-    double Ax = vectorElement[num_el_1 - 1].Coord_center_el.x;
-    double Ay = vectorElement[num_el_1 - 1].Coord_center_el.y;
-    double Ex = xx_1;
-    double Ey = yy_1;
-    double Bx = vectorElement[num_el_2 - 1].Coord_center_el.x;
-    double By = vectorElement[num_el_2 - 1].Coord_center_el.y;
-    double Cx = vectorElement[num_el_3 - 1].Coord_center_el.x;
-    double Cy = vectorElement[num_el_3 - 1].Coord_center_el.y;
-
-    a1 = Ay - Ey;
-    b1 = Ex - Ax;
-    c1 = Ax * Ey - Ex * Ay;
-    a2 = By - Cy;
-    b2 = Cx - Bx;
-    c2 = Bx * Cy - Cx * By;
-
-    double det = a1 * b2 - a2 * b1;
-    double Dx = (b1 * c2 - b2 * c1) / det;
-    double Dy = (a2 * c1 - a1 * c2) / det;
-
-    double BD = sqrt(pow((Bx - Dx), 2) + pow((By - Dy), 2));
-    double DC = sqrt(pow((Cx - Dx), 2) + pow((Cy - Dy), 2));
-
-    double T_D = vectorElement[num_el_2 - 1].T + BD / DC * (vectorElement[num_el_3 - 1].T - vectorElement[num_el_2 - 1].T);
-
-    double AE = sqrt(pow((Ax - xx_1), 2) + pow((Ay - Dy), 2));
-    double ED = sqrt(pow((xx_1 - Dx), 2) + pow((yy_1 - Dy), 2));
-
-    double T_E = vectorElement[num_el_1 - 1].T + AE / ED * (T_D - vectorElement[num_el_1 - 1].T);
-
-    cout << Dx << " \t " << Dy << "\t" << T_E << endl;
-
-}
-
-void Find_cut()
-{
-
-
+    cout << "===========================================================================" << endl;
 
 }
 
 int main()
 {
 
+    Iter_Glob = 0;
+
     Mesh_Init();
     Arrays_Creation();
     Initial_Conditions();
 
-    Find_el(xx_1, yy_1);
-
-    Iter_Glob = 0;
+    Temp_prof(xx_1, yy_1);
 
     do
     {
@@ -780,8 +788,6 @@ int main()
         _time += dt;
 
     } while (E_T > 0.000001);
-
-    Find_el(xx_1, yy_1);
 
     Write_End();
     Arrays_Remove();
