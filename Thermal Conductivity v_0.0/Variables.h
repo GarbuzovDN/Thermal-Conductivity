@@ -3,10 +3,6 @@
 /* Количество элементов */
 int max_str;
 
-/* Директория файла с сеткой */
-string File_Mesh_Name = "Documents/Mesh/Mesh_Coaxial_Cylinders_(El = 92).msh";
-ifstream File_Mesh(File_Mesh_Name);
-
 /* Структуры точек и структура элементов*/
 struct Point
 {
@@ -87,10 +83,18 @@ double T0 = 1.0;
 double T1 = 0.0;
 
 /* Номер элемента для отслеживания */
-int num_el;
+int num_el_1, num_el_2, num_el_3;
+
+/* Координаты контрольного элемента */
+double xx_1 = 0.5, yy_1 = 0.1;
 
 /* Параметр установления */
 double E_T;
+
+/* Директория файла с сеткой */
+string File_Mesh_Name =
+"Documents/Mesh/Mesh_Coaxial_Cylinders_(El = 178).msh";
+ifstream File_Mesh(File_Mesh_Name);
 
 /* Шаг и счетчик времени */
 double dt = 0.001;
