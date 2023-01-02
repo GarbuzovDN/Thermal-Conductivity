@@ -3,7 +3,7 @@
 double Pi = 3.14159;
 
 /* Количество элементов */
-int max_str;
+int max_str, max_node, max_el;
 
 /* Структуры точек и структура элементов*/
 struct Point
@@ -65,6 +65,12 @@ struct Element
     /* Значение температуры в КО на новом слое по времени */
     double T;
 
+    /* Значение ст. отверждения в КО на старом слое по времени */
+    double alfa;
+
+    /* Значение ст. отверждения в КО на новом слое по времени */
+    double Alfa;
+
     /* Удаленность от центра */
     double l;
 
@@ -77,12 +83,11 @@ vector<Element> vectorElement;
 /* Счетчик итераций */
 int Iter_Glob;
 
-/* Массив температуры */
-double* T;
-
 /* Граничные условия */
-double T0 = 1.0;
-double T1 = 0.0;
+double Tw_0 = 100 + 273.15;
+double Tw_1 = 230 + 273.15;
+double T0 = (Tw_0 - Tw_0) / (Tw_1 - Tw_0);
+double T1 = (Tw_1 - Tw_0) / (Tw_1 - Tw_0);
 
 /* Номер элемента для отслеживания */
 int num_el_1, num_el_2, num_el_3;
@@ -95,10 +100,19 @@ double E_T;
 
 /* Директория файла с сеткой */
 string File_Mesh_Name =
-"Documents/Mesh/Mesh_Coaxial_Cylinders_(El = 178).msh";
+"Documents/Mesh/Mesh_Coaxial_Cylinders_(El = 5736).msh";
 ifstream File_Mesh(File_Mesh_Name);
 
+/* Параметры */
+double rho = 2080;
+double L = 0.01;
+double lambda = 0.432;
+
 /* Шаг и счетчик времени */
-double dt = 0.001;
+double dt = 0.00001;
 double _time = 0.0;
 double final_time = 1.0;
+double dem_time = 0.0;
+
+/* Постоянная/переменная теплоемкость */
+bool Constant_Heat_Capacity = false;
