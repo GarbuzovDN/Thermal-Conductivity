@@ -25,7 +25,7 @@ void Find_String(string Str)
 
     if (!File_Mesh)
     {
-        cout << "ERROR opening the file: " << File_Mesh_Name << endl << endl << endl;
+        cout << "ERROR opening the file MESH: " << File_Mesh_Name << endl << endl << endl;
 
         exit(1);
     }
@@ -35,7 +35,7 @@ void Find_String(string Str)
         if (max_str != 0)
         {
 
-            cout << fixed << setprecision(4) << "Time: " << _time << endl << "Mesh (Number of nodes): " << max_el << endl;
+            cout << fixed << setprecision(4) << "Time: " << _time << endl << "Mesh (Number of nodes): " << max_node << endl;
 
         }
 
@@ -62,265 +62,329 @@ void Find_String(string Str)
 
 }
 
-void Mesh_Init()
+void Read_Save()
 {
 
-    Find_String("$Nodes");
+    ifstream File_Read_Save(File_Save_Name);
 
-    max_node = max_str;
+    if (!File_Read_Save)
+    {
+        cout << "ERROR opening the file SAVE: " << File_Save_Name << endl << endl << endl;
 
-    Point node;
-
-    /* Заполнение структуры точек */
-    for (int i = 1; i <= max_node; i++)
+        exit(1);
+    }
+    else
     {
 
-        double temp;
-        int temp_int;
+        File_Read_Save >> _time >> max_el >> max_node;
+        File_Read_Save >> Pi >> Tw_0 >> Tw_1 >> T0 >> T1 >> num_el_1 >> num_el_2 >> num_el_3;
+        File_Read_Save >> rho >> L >> lambda >> dt >> _time >> final_time >> dem_time;
+        File_Read_Save >> xx_1 >> yy_1 >> E_T >> File_Mesh_Name;
 
-        File_Mesh >> temp_int >> node.x >> node.y >> temp;
+        Point node;
 
-        node.Num_node = temp_int - 1;
+        /* Заполнение структуры точек */
+        for (int i = 1; i <= max_node; i++)
+        {
 
-        node.Boundary = false;
+            File_Read_Save >> node.Num_node >> node.Boundary >> node.x >> node.y;
 
-        vectorPoint.push_back(node);
+            vectorPoint.push_back(node);
 
-        i = i;
+        }
+
+        Element el;
+
+        /* Запись струтктуры элементов */
+        for (int i = 0; i <= max_el; i++)
+        {
+
+            File_Read_Save >> el.Num_el >> el.Geom_el >> el.Num_bound >> el.Num_vert_1 >> el.Num_vert_2 >> el.Num_vert_3 >>
+                el.Coord_vert_1.x >> el.Coord_vert_1.y >> el.Coord_vert_2.x >> el.Coord_vert_2.y >> el.Coord_vert_3.x >> el.Coord_vert_3.y >>
+                el.Num_bound_vert_1 >> el.Num_bound_vert_2 >> el.Length_face_el_1 >> el.Length_face_el_2 >> el.Length_face_el_3 >> el.Area_el >>
+                el.Coord_center_el.x >> el.Coord_center_el.y >> el.h_1 >> el.h_2 >> el.h_3 >>
+                el.N1_e >> el.N2_e >> el.N3_e >> el.t >> el.T >> el.alfa >> el.Alfa;
+
+            vectorElement.push_back(el);
+
+        }
+
+        cout << "File opened SUCCESSFULLY: " << File_Save_Name << endl;
+        cout << fixed << setprecision(4) << "Time: " << _time << endl << "Mesh (Number of nodes): " << max_el << endl;
 
     }
 
-    Find_String("$Elements");
+}
 
-    max_el = max_str;
+void Mesh_Init()
+{
 
-    Element el;
+    vectorPoint.clear();
+    vectorElement.clear();
 
-    /* Заполнение структуры элементов */
-    for (int i = 1; i <= max_el + 1; i++)
+    if (Read_From_Save == false)
     {
 
-        double temp;
-        int temp_int;
+        Find_String("$Nodes");
 
-        File_Mesh >> temp_int >> el.Geom_el;
+        max_node = max_str;
 
-        el.Num_el = temp_int - 1;
+        Point node;
 
-        if (el.Geom_el == 15)
-        {
-            int temp_int_1;
-
-            File_Mesh >> temp >> temp >> temp >> temp_int_1;
-            el.Num_vert_1 = temp_int_1 - 1;
-            el.Coord_vert_1 = vectorPoint[el.Num_vert_1];
-            vectorPoint[el.Num_vert_1].Boundary = true;
-
-        }
-        if (el.Geom_el == 1)
+        /* Заполнение структуры точек */
+        for (int i = 1; i <= max_node; i++)
         {
 
-            int temp_int_1, temp_int_2;
+            double temp;
+            int temp_int;
 
-            File_Mesh >> temp >> temp >> el.Num_bound >> temp_int_1 >> temp_int_2;
-            el.Num_vert_1 = temp_int_1 - 1;
-            el.Num_vert_2 = temp_int_2 - 1;
+            File_Mesh >> temp_int >> node.x >> node.y >> temp;
 
-            el.Coord_vert_1 = vectorPoint[el.Num_vert_1];
-            el.Coord_vert_2 = vectorPoint[el.Num_vert_2];
-            vectorPoint[el.Num_vert_1].Boundary = true;
-            vectorPoint[el.Num_vert_2].Boundary = true;
+            node.Num_node = temp_int - 1;
 
-            el.Num_bound_vert_1 = el.Num_vert_1;
-            el.Num_bound_vert_2 = el.Num_vert_2;
+            node.Boundary = false;
+
+            vectorPoint.push_back(node);
 
             i = i;
 
         }
-        if (el.Geom_el == 2)
+
+        Find_String("$Elements");
+
+        max_el = max_str;
+
+        Element el;
+
+        /* Заполнение структуры элементов */
+        for (int i = 1; i <= max_el + 1; i++)
         {
 
-            int temp_int_1, temp_int_2, temp_int_3;
+            double temp;
+            int temp_int;
 
-            File_Mesh >> temp >> temp >> temp >> temp_int_1 >> temp_int_2 >> temp_int_3;
-            el.Num_vert_1 = temp_int_1 - 1;
-            el.Num_vert_2 = temp_int_2 - 1;
-            el.Num_vert_3 = temp_int_3 - 1;
+            File_Mesh >> temp_int >> el.Geom_el;
 
-            el.Coord_vert_1 = vectorPoint[el.Num_vert_1];
-            el.Coord_vert_2 = vectorPoint[el.Num_vert_2];
-            el.Coord_vert_3 = vectorPoint[el.Num_vert_3];
+            el.Num_el = temp_int - 1;
 
-            el.Num_bound = 0;
+            if (el.Geom_el == 15)
+            {
+                int temp_int_1;
 
-            double pp = 0.0;
+                File_Mesh >> temp >> temp >> temp >> temp_int_1;
+                el.Num_vert_1 = temp_int_1 - 1;
+                el.Coord_vert_1 = vectorPoint[el.Num_vert_1];
+                vectorPoint[el.Num_vert_1].Boundary = true;
 
-        }
-
-        el.Length_face_el_1 = sqrt(pow((el.Coord_vert_2.x - el.Coord_vert_1.x), 2) + pow((el.Coord_vert_2.y - el.Coord_vert_1.y), 2));
-        el.Length_face_el_2 = sqrt(pow((el.Coord_vert_3.x - el.Coord_vert_2.x), 2) + pow((el.Coord_vert_3.y - el.Coord_vert_2.y), 2));
-        el.Length_face_el_3 = sqrt(pow((el.Coord_vert_3.x - el.Coord_vert_1.x), 2) + pow((el.Coord_vert_3.y - el.Coord_vert_1.y), 2));
-
-        double a = el.Length_face_el_1;
-        double b = el.Length_face_el_2;
-        double c = el.Length_face_el_3;
-        double p = 0.5 * (a + b + c);
-        el.Area_el = sqrt(p * (p - a) * (p - b) * (p - c));
-
-        /* Блок нахождения центра элемента */
-        {
-
-            /* Уравнение серединного перпендикуляра 1 */
-            double AB = el.Length_face_el_1, BC = el.Length_face_el_2, AC = el.Length_face_el_3;
-            double x_a = el.Coord_vert_1.x, x_b = el.Coord_vert_2.x, x_c = el.Coord_vert_3.x;
-            double y_a = el.Coord_vert_1.y, y_b = el.Coord_vert_2.y, y_c = el.Coord_vert_3.y;
-
-            el.Coord_center_el.x = (BC * x_a + AC * x_b + AB * x_c) / (AB + BC + AC);
-            el.Coord_center_el.y = (BC * y_a + AC * y_b + AB * y_c) / (AB + BC + AC);
-
-        }
-
-        el.h_1 = el.Area_el / p;
-        el.h_2 = el.Area_el / p;
-        el.h_3 = el.Area_el / p;
-
-        vectorElement.push_back(el);
-
-        i = i;
-
-    }
-
-    int p1, p2;
-
-    /* Блок нахождения соседних и граничных элементов */
-    {
-
-        for (int i = 1; i < vectorElement.size() - 1; i++)
-        {
-
-            if (vectorElement[i].Geom_el == 2)
+            }
+            if (el.Geom_el == 1)
             {
 
-                /* Cосед между точками 1 и 2 */
-                p1 = vectorElement[i].Num_vert_1;
-                p2 = vectorElement[i].Num_vert_2;
-                if (vectorPoint[p1].Boundary && vectorPoint[p2].Boundary)
-                {
+                int temp_int_1, temp_int_2;
 
-                    vectorElement[i].N1_e = -1;
+                File_Mesh >> temp >> temp >> el.Num_bound >> temp_int_1 >> temp_int_2;
+                el.Num_vert_1 = temp_int_1 - 1;
+                el.Num_vert_2 = temp_int_2 - 1;
 
-                    for (int j = 0; j < vectorElement.size(); j++)
-                    {
+                el.Coord_vert_1 = vectorPoint[el.Num_vert_1];
+                el.Coord_vert_2 = vectorPoint[el.Num_vert_2];
+                vectorPoint[el.Num_vert_1].Boundary = true;
+                vectorPoint[el.Num_vert_2].Boundary = true;
 
-                        if ((p1 == vectorElement[j].Num_bound_vert_1 && p2 == vectorElement[j].Num_bound_vert_2) || (p1 == vectorElement[j].Num_bound_vert_2 && p2 == vectorElement[j].Num_bound_vert_1))
-                        {
-
-                            vectorElement[i].Num_bound = vectorElement[j].Num_bound;
-
-                            break;
-
-                        }
-
-                    }
-
-                }
-                else
-                {
-
-                    for (int j = 0; j < vectorElement.size(); j++)
-                    {
-                        if ((p1 == vectorElement[j].Num_vert_1 && p2 == vectorElement[j].Num_vert_2 || p1 == vectorElement[j].Num_vert_2 && p2 == vectorElement[j].Num_vert_1) && j != vectorElement[i].Num_el) { vectorElement[i].N1_e = j; break; }
-                        if ((p1 == vectorElement[j].Num_vert_2 && p2 == vectorElement[j].Num_vert_3 || p1 == vectorElement[j].Num_vert_3 && p2 == vectorElement[j].Num_vert_2) && j != vectorElement[i].Num_el) { vectorElement[i].N1_e = j; break; }
-                        if ((p1 == vectorElement[j].Num_vert_1 && p2 == vectorElement[j].Num_vert_3 || p1 == vectorElement[j].Num_vert_3 && p2 == vectorElement[j].Num_vert_1) && j != vectorElement[i].Num_el) { vectorElement[i].N1_e = j; break; }
-                    }
-
-                }
-
-                /* Cосед между точками 2 и 3 */
-                p1 = vectorElement[i].Num_vert_2;
-                p2 = vectorElement[i].Num_vert_3;
-                if (vectorPoint[p1].Boundary && vectorPoint[p2].Boundary)
-                {
-
-                    vectorElement[i].N2_e = -1;
-
-                    for (int j = 0; j < vectorElement.size(); j++)
-                    {
-
-                        if ((p1 == vectorElement[j].Num_bound_vert_1 && p2 == vectorElement[j].Num_bound_vert_2) || (p1 == vectorElement[j].Num_bound_vert_2 && p2 == vectorElement[j].Num_bound_vert_1))
-                        {
-
-                            vectorElement[i].Num_bound = vectorElement[j].Num_bound;
-
-                            break;
-
-                        }
-
-                    }
-
-
-                }
-                else
-                {
-
-                    for (int j = 0; j < vectorElement.size(); j++)
-                    {
-                        if ((p1 == vectorElement[j].Num_vert_1 && p2 == vectorElement[j].Num_vert_2 || p1 == vectorElement[j].Num_vert_2 && p2 == vectorElement[j].Num_vert_1) && j != vectorElement[i].Num_el) { vectorElement[i].N2_e = j; break; }
-                        if ((p1 == vectorElement[j].Num_vert_2 && p2 == vectorElement[j].Num_vert_3 || p1 == vectorElement[j].Num_vert_3 && p2 == vectorElement[j].Num_vert_2) && j != vectorElement[i].Num_el) { vectorElement[i].N2_e = j; break; }
-                        if ((p1 == vectorElement[j].Num_vert_1 && p2 == vectorElement[j].Num_vert_3 || p1 == vectorElement[j].Num_vert_3 && p2 == vectorElement[j].Num_vert_1) && j != vectorElement[i].Num_el) { vectorElement[i].N2_e = j; break; }
-                    }
-
-                }
-
-                /* Cосед между точками 1 и 3 */
-                p1 = vectorElement[i].Num_vert_1;
-                p2 = vectorElement[i].Num_vert_3;
-                if (vectorPoint[p1].Boundary && vectorPoint[p2].Boundary)
-                {
-
-                    vectorElement[i].N3_e = -1;
-
-                    for (int j = 0; j < vectorElement.size(); j++)
-                    {
-
-                        if ((p1 == vectorElement[j].Num_bound_vert_1 && p2 == vectorElement[j].Num_bound_vert_2) || (p1 == vectorElement[j].Num_bound_vert_2 && p2 == vectorElement[j].Num_bound_vert_1))
-                        {
-
-                            vectorElement[i].Num_bound = vectorElement[j].Num_bound;
-
-                            break;
-
-                        }
-
-                    }
-
-                }
-                else
-                {
-
-                    for (int j = 0; j < vectorElement.size(); j++)
-                    {
-                        if ((p1 == vectorElement[j].Num_vert_1 && p2 == vectorElement[j].Num_vert_2 || p1 == vectorElement[j].Num_vert_2 && p2 == vectorElement[j].Num_vert_1) && j != vectorElement[i].Num_el) { vectorElement[i].N3_e = j; break; }
-                        if ((p1 == vectorElement[j].Num_vert_2 && p2 == vectorElement[j].Num_vert_3 || p1 == vectorElement[j].Num_vert_3 && p2 == vectorElement[j].Num_vert_2) && j != vectorElement[i].Num_el) { vectorElement[i].N3_e = j; break; }
-                        if ((p1 == vectorElement[j].Num_vert_1 && p2 == vectorElement[j].Num_vert_3 || p1 == vectorElement[j].Num_vert_3 && p2 == vectorElement[j].Num_vert_1) && j != vectorElement[i].Num_el) { vectorElement[i].N3_e = j; break; }
-
-                        j = j;
-
-                    }
-
-                }
-
-                //cout << vectorElement[i].Num_el << " \t " << vectorElement[i].N1_e << " \t " << vectorElement[i].N2_e << " \t " << vectorElement[i].N3_e << " \t " << vectorElement[i].Num_bound << endl;
+                el.Num_bound_vert_1 = el.Num_vert_1;
+                el.Num_bound_vert_2 = el.Num_vert_2;
 
                 i = i;
+
+            }
+            if (el.Geom_el == 2)
+            {
+
+                int temp_int_1, temp_int_2, temp_int_3;
+
+                File_Mesh >> temp >> temp >> temp >> temp_int_1 >> temp_int_2 >> temp_int_3;
+                el.Num_vert_1 = temp_int_1 - 1;
+                el.Num_vert_2 = temp_int_2 - 1;
+                el.Num_vert_3 = temp_int_3 - 1;
+
+                el.Coord_vert_1 = vectorPoint[el.Num_vert_1];
+                el.Coord_vert_2 = vectorPoint[el.Num_vert_2];
+                el.Coord_vert_3 = vectorPoint[el.Num_vert_3];
+
+                el.Num_bound = 0;
+
+                double pp = 0.0;
+
+            }
+
+            el.Length_face_el_1 = sqrt(pow((el.Coord_vert_2.x - el.Coord_vert_1.x), 2) + pow((el.Coord_vert_2.y - el.Coord_vert_1.y), 2));
+            el.Length_face_el_2 = sqrt(pow((el.Coord_vert_3.x - el.Coord_vert_2.x), 2) + pow((el.Coord_vert_3.y - el.Coord_vert_2.y), 2));
+            el.Length_face_el_3 = sqrt(pow((el.Coord_vert_3.x - el.Coord_vert_1.x), 2) + pow((el.Coord_vert_3.y - el.Coord_vert_1.y), 2));
+
+            double a = el.Length_face_el_1;
+            double b = el.Length_face_el_2;
+            double c = el.Length_face_el_3;
+            double p = 0.5 * (a + b + c);
+            el.Area_el = sqrt(p * (p - a) * (p - b) * (p - c));
+
+            /* Блок нахождения центра элемента */
+            {
+
+                /* Уравнение серединного перпендикуляра 1 */
+                double AB = el.Length_face_el_1, BC = el.Length_face_el_2, AC = el.Length_face_el_3;
+                double x_a = el.Coord_vert_1.x, x_b = el.Coord_vert_2.x, x_c = el.Coord_vert_3.x;
+                double y_a = el.Coord_vert_1.y, y_b = el.Coord_vert_2.y, y_c = el.Coord_vert_3.y;
+
+                el.Coord_center_el.x = (BC * x_a + AC * x_b + AB * x_c) / (AB + BC + AC);
+                el.Coord_center_el.y = (BC * y_a + AC * y_b + AB * y_c) / (AB + BC + AC);
+
+            }
+
+            el.h_1 = el.Area_el / p;
+            el.h_2 = el.Area_el / p;
+            el.h_3 = el.Area_el / p;
+
+            vectorElement.push_back(el);
+
+            i = i;
+
+        }
+
+        int p1, p2;
+
+        /* Блок нахождения соседних и граничных элементов */
+        {
+
+            for (int i = 1; i < vectorElement.size() - 1; i++)
+            {
+
+                if (vectorElement[i].Geom_el == 2)
+                {
+
+                    /* Cосед между точками 1 и 2 */
+                    p1 = vectorElement[i].Num_vert_1;
+                    p2 = vectorElement[i].Num_vert_2;
+                    if (vectorPoint[p1].Boundary && vectorPoint[p2].Boundary)
+                    {
+
+                        vectorElement[i].N1_e = -1;
+
+                        for (int j = 0; j < vectorElement.size(); j++)
+                        {
+
+                            if ((p1 == vectorElement[j].Num_bound_vert_1 && p2 == vectorElement[j].Num_bound_vert_2) || (p1 == vectorElement[j].Num_bound_vert_2 && p2 == vectorElement[j].Num_bound_vert_1))
+                            {
+
+                                vectorElement[i].Num_bound = vectorElement[j].Num_bound;
+
+                                break;
+
+                            }
+
+                        }
+
+                    }
+                    else
+                    {
+
+                        for (int j = 0; j < vectorElement.size(); j++)
+                        {
+                            if ((p1 == vectorElement[j].Num_vert_1 && p2 == vectorElement[j].Num_vert_2 || p1 == vectorElement[j].Num_vert_2 && p2 == vectorElement[j].Num_vert_1) && j != vectorElement[i].Num_el) { vectorElement[i].N1_e = j; break; }
+                            if ((p1 == vectorElement[j].Num_vert_2 && p2 == vectorElement[j].Num_vert_3 || p1 == vectorElement[j].Num_vert_3 && p2 == vectorElement[j].Num_vert_2) && j != vectorElement[i].Num_el) { vectorElement[i].N1_e = j; break; }
+                            if ((p1 == vectorElement[j].Num_vert_1 && p2 == vectorElement[j].Num_vert_3 || p1 == vectorElement[j].Num_vert_3 && p2 == vectorElement[j].Num_vert_1) && j != vectorElement[i].Num_el) { vectorElement[i].N1_e = j; break; }
+                        }
+
+                    }
+
+                    /* Cосед между точками 2 и 3 */
+                    p1 = vectorElement[i].Num_vert_2;
+                    p2 = vectorElement[i].Num_vert_3;
+                    if (vectorPoint[p1].Boundary && vectorPoint[p2].Boundary)
+                    {
+
+                        vectorElement[i].N2_e = -1;
+
+                        for (int j = 0; j < vectorElement.size(); j++)
+                        {
+
+                            if ((p1 == vectorElement[j].Num_bound_vert_1 && p2 == vectorElement[j].Num_bound_vert_2) || (p1 == vectorElement[j].Num_bound_vert_2 && p2 == vectorElement[j].Num_bound_vert_1))
+                            {
+
+                                vectorElement[i].Num_bound = vectorElement[j].Num_bound;
+
+                                break;
+
+                            }
+
+                        }
+
+
+                    }
+                    else
+                    {
+
+                        for (int j = 0; j < vectorElement.size(); j++)
+                        {
+                            if ((p1 == vectorElement[j].Num_vert_1 && p2 == vectorElement[j].Num_vert_2 || p1 == vectorElement[j].Num_vert_2 && p2 == vectorElement[j].Num_vert_1) && j != vectorElement[i].Num_el) { vectorElement[i].N2_e = j; break; }
+                            if ((p1 == vectorElement[j].Num_vert_2 && p2 == vectorElement[j].Num_vert_3 || p1 == vectorElement[j].Num_vert_3 && p2 == vectorElement[j].Num_vert_2) && j != vectorElement[i].Num_el) { vectorElement[i].N2_e = j; break; }
+                            if ((p1 == vectorElement[j].Num_vert_1 && p2 == vectorElement[j].Num_vert_3 || p1 == vectorElement[j].Num_vert_3 && p2 == vectorElement[j].Num_vert_1) && j != vectorElement[i].Num_el) { vectorElement[i].N2_e = j; break; }
+                        }
+
+                    }
+
+                    /* Cосед между точками 1 и 3 */
+                    p1 = vectorElement[i].Num_vert_1;
+                    p2 = vectorElement[i].Num_vert_3;
+                    if (vectorPoint[p1].Boundary && vectorPoint[p2].Boundary)
+                    {
+
+                        vectorElement[i].N3_e = -1;
+
+                        for (int j = 0; j < vectorElement.size(); j++)
+                        {
+
+                            if ((p1 == vectorElement[j].Num_bound_vert_1 && p2 == vectorElement[j].Num_bound_vert_2) || (p1 == vectorElement[j].Num_bound_vert_2 && p2 == vectorElement[j].Num_bound_vert_1))
+                            {
+
+                                vectorElement[i].Num_bound = vectorElement[j].Num_bound;
+
+                                break;
+
+                            }
+
+                        }
+
+                    }
+                    else
+                    {
+
+                        for (int j = 0; j < vectorElement.size(); j++)
+                        {
+                            if ((p1 == vectorElement[j].Num_vert_1 && p2 == vectorElement[j].Num_vert_2 || p1 == vectorElement[j].Num_vert_2 && p2 == vectorElement[j].Num_vert_1) && j != vectorElement[i].Num_el) { vectorElement[i].N3_e = j; break; }
+                            if ((p1 == vectorElement[j].Num_vert_2 && p2 == vectorElement[j].Num_vert_3 || p1 == vectorElement[j].Num_vert_3 && p2 == vectorElement[j].Num_vert_2) && j != vectorElement[i].Num_el) { vectorElement[i].N3_e = j; break; }
+                            if ((p1 == vectorElement[j].Num_vert_1 && p2 == vectorElement[j].Num_vert_3 || p1 == vectorElement[j].Num_vert_3 && p2 == vectorElement[j].Num_vert_1) && j != vectorElement[i].Num_el) { vectorElement[i].N3_e = j; break; }
+
+                            j = j;
+
+                        }
+
+                    }
+
+                    //cout << vectorElement[i].Num_el << " \t " << vectorElement[i].N1_e << " \t " << vectorElement[i].N2_e << " \t " << vectorElement[i].N3_e << " \t " << vectorElement[i].Num_bound << endl;
+
+                    i = i;
+
+                }
 
             }
 
         }
 
-    }
+        File_Mesh.close();
 
-    File_Mesh.close();
+    }
+    else Read_Save();
+
 
 }
 
@@ -390,16 +454,22 @@ void Initial_Conditions()
 
     Blank();
 
-    for (int i = 0; i <= max_el; i++)
+    if (Read_From_Save == false)
     {
 
-        vectorElement[i].t = 0.0;
-        vectorElement[i].T = 0.0;
+        for (int i = 0; i <= max_el; i++)
+        {
 
-        vectorElement[i].alfa = 0.0;
-        vectorElement[i].Alfa = 0.0;
+            vectorElement[i].t = 0.0;
+            vectorElement[i].T = 0.0;
+
+            vectorElement[i].alfa = 0.0;
+            vectorElement[i].Alfa = 0.0;
+
+        }
 
     }
+    //else Read_Save();
 
 }
 
@@ -525,7 +595,7 @@ void Calculation_Temperature()
 
                 vectorElement[i].T = dt / (vectorElement[i].Area_el) * (dT1 + dT2 + dT3) + vectorElement[i].t;
 
-                if (dem_time > 300)
+                //if (dem_time > 300)
                 {
                     i = i;
                 }
@@ -550,6 +620,7 @@ void Calculation_Temperature()
         double A_2 = 5.06 * 1e+06;
         double E_1 = 9.29 * 1e+04;
         double E_2 = 8.52 * 1e+04;
+        double dH = 5 * 1e+03;
 
         double a_1 = C(T1) * rho * L * L * A_1 / lambda;
         double a_2 = C(T1) * rho * L * L * A_2 / lambda;
@@ -559,7 +630,9 @@ void Calculation_Temperature()
         double E_2_2 = R * (Tw_1 - Tw_0) / E_2;
         double C_scale = C(T1);
 
-        for (int i = 0; i < max_el; i++)
+        Da = dH / (C_scale * (Tw_1 - Tw_0));
+
+        for (int i = 1; i < max_el; i++)
         {
             if (vectorElement[i].Geom_el == 2)
             {
@@ -579,7 +652,8 @@ void Calculation_Temperature()
                             else if (vectorElement[i].Num_bound == 2)
                             {
 
-                                dT1 = (T0 - vectorElement[i].t) * vectorElement[i].Length_face_el_1 / vectorElement[i].h_1;
+                                if (Thermal_Insulation == true)  dT1 = 0;
+                                if (Thermal_Insulation == false) dT1 = (T0 - vectorElement[i].t) * vectorElement[i].Length_face_el_1 / vectorElement[i].h_1;
 
                             }
 
@@ -600,7 +674,8 @@ void Calculation_Temperature()
                             else if (vectorElement[i].Num_bound == 2)
                             {
 
-                                dT2 = (T0 - vectorElement[i].t) * vectorElement[i].Length_face_el_2 / vectorElement[i].h_2;
+                                if (Thermal_Insulation == true)  dT2 = 0;
+                                if (Thermal_Insulation == false) dT2 = (T0 - vectorElement[i].t) * vectorElement[i].Length_face_el_2 / vectorElement[i].h_2;
 
                             }
 
@@ -621,7 +696,8 @@ void Calculation_Temperature()
                             else if (vectorElement[i].Num_bound == 2)
                             {
 
-                                dT3 = (T0 - vectorElement[i].t) * vectorElement[i].Length_face_el_3 / vectorElement[i].h_3;
+                                if (Thermal_Insulation == true)  dT3 = 0;
+                                if (Thermal_Insulation == false) dT3 = (T0 - vectorElement[i].t) * vectorElement[i].Length_face_el_3 / vectorElement[i].h_3;
 
                             }
 
@@ -640,21 +716,13 @@ void Calculation_Temperature()
                     }
                 }
 
-                if (_time >= 1.4719999999)
-                {
-
-                    i = i;
-
-                }
-
                 double CC = C(vectorElement[i].t) / C_scale;
+                double q = Da * (vectorElement[i].Alfa - vectorElement[i].alfa) / dt;
 
-                vectorElement[i].T = dt / (CC * vectorElement[i].Area_el) * (dT1 + dT2 + dT3) + vectorElement[i].t;
+                vectorElement[i].T = dt / (CC * vectorElement[i].Area_el) * (dT1 + dT2 + dT3) + dt * q / CC + vectorElement[i].t;
 
-                double dalfa = pow((1 - vectorElement[i].alfa), n) * (a_1 * exp(-1.0 / (E_1_1 + E_1_2 * vectorElement[i].T)) + a_2 * pow(vectorElement[i].alfa, 0.892) * exp(-1.0 / (E_2_1 + E_2_2 * vectorElement[i].T)));
-                vectorElement[i].Alfa = vectorElement[i].alfa + dt * dalfa;
-
-
+                vectorElement[i].dalfa = pow((1 - vectorElement[i].alfa), n) * (a_1 * exp(-1.0 / (E_1_1 + E_1_2 * vectorElement[i].T)) + a_2 * pow(vectorElement[i].alfa, 0.892) * exp(-1.0 / (E_2_1 + E_2_2 * vectorElement[i].T)));
+                vectorElement[i].Alfa = vectorElement[i].alfa + dt * vectorElement[i].dalfa;
 
             }
         }
@@ -820,45 +888,38 @@ double Temp_prof(double xx, double yy, string param)
 
 void Write_Save()
 {
-    if (Iter_Glob == 1 || Iter_Glob % 500 == 0)
+
+
+    string _path = "Documents/Save/Save_El = " + to_string(max_el);
+    CreateDirectoryA(_path.c_str(), NULL);
+
+    ofstream File_Save(_path + "/Save_(El = " + to_string(max_el) + ").DAT", ios_base::trunc);
+    File_Save << fixed << setprecision(15) << _time << "\t" << max_el << "\t" << max_node << endl;
+    File_Save << fixed << setprecision(15) << Pi << "\t" << Tw_0 << "\t" << Tw_1 << "\t" << T0 << "\t" << T1 << "\t" << num_el_1 << "\t" << num_el_2 << "\t" << num_el_3 << endl;
+    File_Save << fixed << setprecision(15) << rho << "\t" << L << "\t" << lambda << "\t" << dt << "\t" << _time << "\t" << final_time << "\t" << dem_time << endl;
+    File_Save << fixed << setprecision(15) << xx_1 << "\t" << yy_1 << "\t" << E_T << "\t" << File_Mesh_Name << endl;
+
+    /* Запись структуры точек */
+    for (int i = 0; i < max_node; i++)
     {
 
-        string _path = "Documents/Save/Save_El = " + to_string(max_el);
-        CreateDirectoryA(_path.c_str(), NULL);
-
-        ofstream File_Save(_path + "/Save_(El = " + to_string(max_el) + ").DAT", ios_base::trunc);
-
-        File_Save << _time << "\t" << max_el << endl;
-
-        File_Save << Pi << "\t" << Tw_0 << "\t" << Tw_1 << "\t" << T0 << "\t" << T1 << "\t" << num_el_1 << "\t" << num_el_2 << "\t" << num_el_3 << endl;
-
-        File_Save << rho << "\t" << L << "\t" << lambda << "\t" << dt << "\t" << _time << "\t" << final_time << "\t" << dem_time << endl;
-
-        File_Save << xx_1 << "\t" << yy_1 << "\t" << E_T << "\t" << File_Mesh_Name << endl;
-
-        /* Запись структуры точек */
-        for (int i = 0; i < max_node; i++)
-        {
-
-            File_Save << vectorPoint[i].Num_node << "\t" << vectorPoint[i].Boundary << "\t" << vectorPoint[i].x << "\t" << vectorPoint[i].y << endl;
-
-        }
-
-        /* Запись струтктуры элементов */
-        for (int i = 0; i < max_el; i++)
-        {
-
-            File_Save << vectorElement[i].Num_el << "\t" << vectorElement[i].Geom_el << "\t" << vectorElement[i].Num_vert_1 << "\t" << vectorElement[i].Num_vert_2 << "\t" << vectorElement[i].Num_vert_3 << endl;
-            File_Save << vectorElement[i].Coord_vert_1.x << "\t" << vectorElement[i].Coord_vert_1.y << "\t" << vectorElement[i].Coord_vert_2.x << "\t" << vectorElement[i].Coord_vert_2.y << "\t" << vectorElement[i].Coord_vert_3.x << "\t" << vectorElement[i].Coord_vert_3.y << endl;
-            File_Save << vectorElement[i].Num_bound_vert_1 << "\t" << vectorElement[i].Num_bound_vert_2 << "\t" << vectorElement[i].Length_face_el_1 << "\t" << vectorElement[i].Length_face_el_2 << "\t" << vectorElement[i].Length_face_el_3 << "\t" << vectorElement[i].Area_el << endl;
-            File_Save << vectorElement[i].Coord_center_el.x << "\t" << vectorElement[i].Coord_center_el.y << "\t" << vectorElement[i].h_1 << "\t" << vectorElement[i].h_2 << "\t" << vectorElement[i].h_3 << endl;
-            File_Save << vectorElement[i].N1_e << "\t" << vectorElement[i].N2_e << "\t" << vectorElement[i].N3_e << "\t" << vectorElement[i].t << "\t" << vectorElement[i].T << "\t" << vectorElement[i].alfa << "\t" << vectorElement[i].Alfa << "\t" << vectorElement[i].l << endl;
-
-        }
-
-        File_Save.close();
+        File_Save << fixed << setprecision(15) << vectorPoint[i].Num_node << "\t" << vectorPoint[i].Boundary << "\t" << vectorPoint[i].x << "\t" << vectorPoint[i].y << endl;
 
     }
+
+    /* Запись струтктуры элементов */
+    for (int i = 0; i < max_el; i++)
+    {
+
+        File_Save << fixed << setprecision(15) << vectorElement[i].Num_el << "\t" << vectorElement[i].Geom_el << "\t" << vectorElement[i].Num_bound << "\t" << vectorElement[i].Num_vert_1 << "\t" << vectorElement[i].Num_vert_2 << "\t" << vectorElement[i].Num_vert_3 << "\t";
+        File_Save << fixed << setprecision(15) << vectorElement[i].Coord_vert_1.x << "\t" << vectorElement[i].Coord_vert_1.y << "\t" << vectorElement[i].Coord_vert_2.x << "\t" << vectorElement[i].Coord_vert_2.y << "\t" << vectorElement[i].Coord_vert_3.x << "\t" << vectorElement[i].Coord_vert_3.y << "\t";
+        File_Save << fixed << setprecision(15) << vectorElement[i].Num_bound_vert_1 << "\t" << vectorElement[i].Num_bound_vert_2 << "\t" << vectorElement[i].Length_face_el_1 << "\t" << vectorElement[i].Length_face_el_2 << "\t" << vectorElement[i].Length_face_el_3 << "\t" << vectorElement[i].Area_el << "\t";
+        File_Save << fixed << setprecision(15) << vectorElement[i].Coord_center_el.x << "\t" << vectorElement[i].Coord_center_el.y << "\t" << vectorElement[i].h_1 << "\t" << vectorElement[i].h_2 << "\t" << vectorElement[i].h_3 << "\t";
+        File_Save << fixed << setprecision(15) << vectorElement[i].N1_e << "\t" << vectorElement[i].N2_e << "\t" << vectorElement[i].N3_e << "\t" << vectorElement[i].t << "\t" << vectorElement[i].T << "\t" << vectorElement[i].alfa << "\t" << vectorElement[i].Alfa << endl;
+
+    }
+
+    File_Save.close();
 
 }
 
@@ -872,7 +933,7 @@ void Write_End()
     ofstream Field_Alfa(_path + "/1. Field_Alfa_(El = " + to_string(max_el) + ").DAT");
     ofstream Profile_T(_path + "/2. Profile_T_(El = " + to_string(max_el) + ").DAT");
     ofstream Profile_Alfa(_path + "/2. Profile_Alfa_(El = " + to_string(max_el) + ").DAT");
-    ofstream Order_Acc(_path + "/5. Order_Acc_(El = " + to_string(max_el) + ").DAT");
+    ofstream Order_Acc(_path + "/6. Order_Acc_(El = " + to_string(max_el) + ").DAT");
 
     Field_T << fixed << setprecision(4) << "Time: " << _time << "\t" << "Mesh (Number of cells): " << max_el << endl;
     Field_Alfa << fixed << setprecision(4) << "Time: " << _time << "\t" << "Mesh (Number of cells): " << max_el << endl;
@@ -880,7 +941,7 @@ void Write_End()
     double Int_Temp = 0.0, h_average = 0.0;
 
     /* Запись распределния поля T и Alfa */
-    for (int i = 0; i <= max_el; i++)
+    for (int i = 0; i < max_el; i++)
     {
 
         if (vectorElement[i].Geom_el == 2)
@@ -931,9 +992,16 @@ void Write_End()
 
     Profile_T << fixed << setprecision(9) << 0.2 + ii * h << "\t" << T1 << endl;
 
+    Temp_prof(xx_1, yy_1, "NULL");
+
     cout << "===========================================================================" << endl;
 
-    cout << "The calculation is OVER: " << endl << File_Mesh_Name << endl;
+    cout << fixed << setprecision(4) << "Time: " << _time << " (" << dem_time << " sec) " << "\t" << setprecision(10)
+        << "El=" << num_el_1 + 1 << ":(T = " << vectorElement[num_el_1].T << "; Alfa = " << vectorElement[num_el_1].Alfa
+        << ") " << "\t" << "Max.Residual = " << E_T << endl << endl;
+
+    if (Read_From_Save == false) cout << "The calculation is OVER: " << endl << File_Mesh_Name << endl;
+    if (Read_From_Save == true) cout << "The calculation is OVER: " << endl << File_Save_Name << endl;
 
     cout << "===========================================================================" << endl;
 
@@ -950,33 +1018,39 @@ void Write_End()
 void Write()
 {
 
-    if (Iter_Glob == 1) cout << fixed << setprecision(4) << "Mesh (Number of elements): " << max_el << endl;
+    if (Iter_Glob == 1)
+    {
 
-    if (Iter_Glob == 1) cout << "The control element: El.num = "
-        << num_el_1 + 1 << endl;
+        cout << fixed << setprecision(5) << "Mesh (Number of elements): " << max_el << endl;
+        cout << "The control element: El.num = " << num_el_1 + 1 << endl;
+        cout << fixed << setprecision(5) << "Damkohler parameter: Da = " << Da << endl;
+        cout << fixed << setprecision(2) << "Temperature on the walls: Tw_0 = " << Tw_0 - 273.15 << "; Tw_1 = " << Tw_1 - 273.15 << endl;
+        cout << "==============================================================================" << endl;
+        cout << " \t" << " \t" << "If everything is correct, then press ENTER" << endl;
+        cout << "==============================================================================" << endl;
+        cin.get();
 
-    if (Iter_Glob == 1) cout << "==============================================================================" << endl;
-
-    if (Iter_Glob == 1) cout << " \t" << " \t" << "If everything is correct, then press ENTER" << endl;
-
-    if (Iter_Glob == 1) cout << "==============================================================================" << endl;
-
-    if (Iter_Glob == 1) cin.get();
+    }
 
     if (Iter_Glob == 1 || (Iter_Glob % 1000) == 0)
+    {
+
         cout << fixed << setprecision(4) << "Time: " << _time << " (" << dem_time << " sec) " << "\t" << setprecision(10)
-        << "El=" << num_el_1 + 1 << ":(T = " << vectorElement[num_el_1].T << "; Alfa = " << vectorElement[num_el_1].Alfa
-        << ") " << "\t" << "Max.Residual = " << E_T << endl;
+            << "El=" << num_el_1 + 1 << ":(T = " << vectorElement[num_el_1].T << "; Alfa = " << vectorElement[num_el_1].Alfa
+            << ") " << "\t" << "Max.Residual = " << E_T << endl;
+
+    }
 
     string _path = "Documents/Figure/El = " + to_string(max_el);
 
-    if (Iter_Glob == 1)
+    if (Iter_Glob == 1 && Read_From_Save == false)
     {
 
         CreateDirectoryA(_path.c_str(), NULL);
 
         ofstream file_E_T(_path + "/3. Err(time)_(El = " + to_string(max_el) + ").DAT", ios_base::trunc);
         ofstream file_Alfa_T(_path + "/4. Alfa(time)_(El = " + to_string(max_el) + ").DAT", ios_base::trunc);
+        ofstream file_Alfa_Temp(_path + "/5. dAlfa(T)_(El = " + to_string(max_el) + ").DAT", ios_base::trunc);
 
         file_E_T << fixed << setprecision(6) << "Time: " << _time << "\t" << "Mesh (Number of elements): " << max_el << endl;
         file_Alfa_T << fixed << setprecision(6) << "Time: " << _time << "\t" << "Mesh (Number of elements): " << max_el << " Number of control elements: " << num_el_1 + 1 << endl;
@@ -985,12 +1059,37 @@ void Write()
 
     ofstream file_E_T(_path + "/3. Err(time)_(El = " + to_string(max_el) + ").DAT", ios_base::app);
     ofstream file_Alfa_T(_path + "/4. Alfa(time)_(El = " + to_string(max_el) + ").DAT", ios_base::app);
+    ofstream file_Alfa_Temp(_path + "/5. dAlfa(T)_(El = " + to_string(max_el) + ").DAT", ios_base::app);
 
-    if (Iter_Glob == 1 || (Iter_Glob % 1000) == 0) file_E_T << fixed << setprecision(6) << _time << fixed << setprecision(10) << "\t" << E_T << endl;
-    if (Iter_Glob == 1 || (Iter_Glob % 1000) == 0) file_Alfa_T << fixed << setprecision(6) << dem_time << fixed << setprecision(10) << "\t" << vectorElement[num_el_1].Alfa << endl;
+    if (Iter_Glob == 1 || (Iter_Glob % 1000) == 0)
+    {
+
+        file_E_T << fixed << setprecision(6) << _time << fixed << setprecision(10) << "\t" << E_T << endl;
+        file_Alfa_T << fixed << setprecision(6) << dem_time << fixed << setprecision(10) << "\t" << vectorElement[num_el_1].Alfa << endl;
+
+    }
+
+    if (Iter_Glob == 1 || (Iter_Glob % 500) == 0)
+    {
+
+        file_Alfa_Temp << fixed << setprecision(5) << vectorElement[num_el_1].T << fixed << setprecision(5) << "\t" << vectorElement[num_el_1].dalfa << endl;
+        Write_Save();
+
+    }
 
     file_E_T.close();
     file_Alfa_T.close();
+    file_Alfa_Temp.close();
+}
+
+void Time()
+{
+
+    _time += dt;
+    dem_time = _time * C(T1) * rho * L * L / lambda;
+
+    int pp = 0;
+
 }
 
 int main()
@@ -1013,14 +1112,15 @@ int main()
         Calculation_Temperature();
         Development();
         Write();
-        Write_Save();
 
-        _time += dt;
-        dem_time = _time * C(T1) * rho * L * L / lambda;
+        Time();
 
-    } while (E_T >= 0.000000001  /*dem_time <= 500*/);
+    } while (E_T >= 0.000000001  /*dem_time <= 1250*/);
 
     Write_End();
     Arrays_Remove();
+
+    //return 0;
+    system("pause");
 
 }

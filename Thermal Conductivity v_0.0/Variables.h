@@ -71,8 +71,8 @@ struct Element
     /* Значение ст. отверждения в КО на новом слое по времени */
     double Alfa;
 
-    /* Удаленность от центра */
-    double l;
+    /* Значение произв. от Alfa */
+    double dalfa;
 
 };
 
@@ -98,15 +98,20 @@ double xx_1 = 0.5, yy_1 = 0.1;
 /* Параметр установления */
 double E_T;
 
-/* Директория файла с сеткой */
+/* Директория файла с сеткой и Save*/
 string File_Mesh_Name =
-"Documents/Mesh/Mesh_Coaxial_Cylinders_(El = 5736).msh";
+"Documents/Mesh/Mesh_Coaxial_Cylinders_(El=2870).msh";
 ifstream File_Mesh(File_Mesh_Name);
+
+bool Read_From_Save = false;
+string File_Save_Name =
+"Documents/Save/Save_El = 2870/Save_(El = 726).DAT";
 
 /* Параметры */
 double rho = 2080;
 double L = 0.01;
 double lambda = 0.432;
+double Da;
 
 /* Шаг и счетчик времени */
 double dt = 0.00001;
@@ -116,3 +121,6 @@ double dem_time = 0.0;
 
 /* Постоянная/переменная теплоемкость */
 bool Constant_Heat_Capacity = false;
+
+/* Теплоизоляция */
+bool Thermal_Insulation = true;
